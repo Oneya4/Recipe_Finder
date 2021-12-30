@@ -1,10 +1,15 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../widgets/custom_dropdown.dart';
 import '../colors.dart';
+import 'dart:convert';
+import '../../network/recipe_model.dart';
+import '../recipe_card.dart';
+import 'recipe_details.dart';
 
 class RecipeList extends StatefulWidget {
   const RecipeList({Key? key}) : super(key: key);
@@ -26,15 +31,17 @@ class _RecipeListState extends State<RecipeList> {
   bool loading = false;
   bool inErrorState = false;
   List<String> previousSearches = <String>[];
+  APIRecipeQuery? _currentRecipes1;
 
   @override
   void initState() {
     super.initState();
     getPreviousSearches();
+    loadRecipes();
 
     searchTextController = TextEditingController(text: '');
     _scrollController
-      ..addListener(() {
+      .addListener(() {
         final triggerFetchMoreSize =
             0.7 * _scrollController.position.maxScrollExtent;
 
@@ -75,6 +82,13 @@ class _RecipeListState extends State<RecipeList> {
         previousSearches = <String>[];
       }
     }
+  }
+
+  Future loadRecipes() async {
+    final jsonString = await rootBundle.loadString('assets/recipes1.json');
+    setState(() {
+      _currentRecipes1 = APIRecipeQuery.fromJson(jsonDecode(jsonString));
+    });
   }
 
   @override
@@ -119,14 +133,11 @@ class _RecipeListState extends State<RecipeList> {
               child: Row(
                 children: <Widget>[
                   Expanded(
-                      // 3
                       child: TextField(
                     decoration: const InputDecoration(
                         border: InputBorder.none, hintText: 'Search'),
                     autofocus: false,
-                    // 4
                     textInputAction: TextInputAction.done,
-                    // 5
                     onSubmitted: (value) {
                       if (!previousSearches.contains(value)) {
                         previousSearches.add(value);
@@ -135,19 +146,16 @@ class _RecipeListState extends State<RecipeList> {
                     },
                     controller: searchTextController,
                   )),
-                  // 6
                   PopupMenuButton<String>(
                     icon: const Icon(
                       Icons.arrow_drop_down,
                       color: lightGrey,
                     ),
-                    // 7
                     onSelected: (String value) {
                       searchTextController.text = value;
                       startSearch(searchTextController.text);
                     },
                     itemBuilder: (BuildContext context) {
-                      // 8
                       return previousSearches
                           .map<CustomDropdownMenuItem<String>>((String value) {
                         return CustomDropdownMenuItem<String>(
@@ -155,7 +163,6 @@ class _RecipeListState extends State<RecipeList> {
                           value: value,
                           callback: () {
                             setState(() {
-                              // 9
                               previousSearches.remove(value);
                               Navigator.pop(context);
                             });
@@ -190,12 +197,29 @@ class _RecipeListState extends State<RecipeList> {
   }
 
   Widget _buildRecipeLoader(BuildContext context) {
-    if (searchTextController.text.length < 3) {
+    if (_currentRecipes1 == null || _currentRecipes1?.hits == null) {
       return Container();
     }
-    // Show a loading indicator while waiting for the movies
-    return const Center(
-      child: CircularProgressIndicator(),
+    // Show a loading indicator while waiting for the recipes
+    return Center(
+      child: _buildRecipeCard(context, _currentRecipes1!.hits, 0),
+    );
+  }
+
+  Widget _buildRecipeCard(
+      BuildContext topLevelContext, List<APIHits> hits, int index) {
+    // 1
+    final recipe = hits[index].recipe;
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(topLevelContext, MaterialPageRoute(
+          builder: (context) {
+            return const RecipeDetails();
+          },
+        ));
+      },
+      // 2
+      child: recipeStringCard(recipe.image, recipe.label),
     );
   }
 }
