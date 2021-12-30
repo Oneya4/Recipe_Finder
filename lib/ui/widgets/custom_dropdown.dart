@@ -1,102 +1,58 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import '../colors.dart';
 
-import '../myrecipes/my_recipes_list.dart';
-import '../recipes/recipe_list.dart';
-import '../shopping/shopping_list.dart';
+class CustomDropdownMenuItem<T> extends PopupMenuEntry<T> {
+  const CustomDropdownMenuItem(
+      {Key? key, required this.value, required this.text, this.callback})
+      : super(key: key);
 
-class MainScreen extends StatefulWidget {
-  const MainScreen({Key? key}) : super(key: key);
+  final T value;
+  final String text;
+  final Function? callback;
 
   @override
-  _MainScreenState createState() => _MainScreenState();
+  _CustomDropdownMenuItemState<T> createState() =>
+      _CustomDropdownMenuItemState<T>();
+
+  @override
+  double get height => 32.0;
+
+  @override
+  bool represents(T? value) => this.value == value;
 }
 
-class _MainScreenState extends State<MainScreen> {
-  int _selectedIndex = 0;
-  List<Widget> pageList = <Widget>[];
-  // TODO: Add index key
-
-  @override
-  void initState() {
-    super.initState();
-    pageList.add(const RecipeList());
-    pageList.add(const MyRecipesList());
-    pageList.add(const ShoppingList());
-    // TODO: Call getCurrentIndex
-  }
-
-  void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
-    // TODO: Call saveCurrentIndex
-  }
-
+class _CustomDropdownMenuItemState<T> extends State<CustomDropdownMenuItem<T>> {
   @override
   Widget build(BuildContext context) {
-    String title;
-    switch (_selectedIndex) {
-      case 0:
-        title = 'Recipes';
-        break;
-      case 1:
-        title = 'Bookmarks';
-        break;
-      case 2:
-        title = 'Groceries';
-        break;
-      default:
-        title = 'Recipes';
-        break;
-    }
-    return Scaffold(
-      bottomNavigationBar: BottomNavigationBar(
-        items: [
-          BottomNavigationBarItem(
-              icon: SvgPicture.asset('assets/images/icon_recipe.svg',
-                  color: _selectedIndex == 0 ? green : Colors.grey,
-                  semanticsLabel: 'Recipes'),
-              label: 'Recipes'),
-          BottomNavigationBarItem(
-              icon: SvgPicture.asset('assets/images/icon_bookmarks.svg',
-                  color: _selectedIndex == 1 ? green : Colors.grey,
-                  semanticsLabel: 'Bookmarks'),
-              label: 'Bookmarks'),
-          BottomNavigationBarItem(
-              icon: SvgPicture.asset('assets/images/icon_shopping_list.svg',
-                  color: _selectedIndex == 2 ? green : Colors.grey,
-                  semanticsLabel: 'Groceries'),
-              label: 'Groceries'),
-        ],
-        currentIndex: _selectedIndex,
-        selectedItemColor: green,
-        onTap: _onItemTapped,
-      ),
-      appBar: AppBar(
-        elevation: 0,
-        backgroundColor: Colors.white,
-        systemOverlayStyle: const SystemUiOverlayStyle(
-          systemNavigationBarColor: Colors.white,
-          statusBarColor: Colors.white,
-          statusBarBrightness: Brightness.light,
-          statusBarIconBrightness: Brightness.dark,
-          systemNavigationBarDividerColor: Colors.white,
-          //Navigation bar divider color
-          systemNavigationBarIconBrightness:
-              Brightness.light, //navigation bar icon
+    return ConstrainedBox(
+      constraints: const BoxConstraints(minWidth: 120),
+      child: InkWell(
+        onTap: () => Navigator.of(context).pop<T>(widget.value),
+        child: Container(
+          constraints: const BoxConstraints(minWidth: 30.0),
+          child: Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: ListTile(
+              title: Text(
+                widget.text,
+                style: TextStyle(
+                  fontSize: 14.0,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.grey.shade600,
+                ),
+              ),
+              trailing: GestureDetector(
+                onTap: () {
+                  if (widget.callback != null) {
+                    widget.callback!();
+                  }
+                },
+                child: SvgPicture.asset('assets/images/dismiss.svg',
+                    color: Colors.grey, semanticsLabel: 'Back'),
+              ),
+            ),
+          ),
         ),
-        title: Text(
-          title,
-          style: const TextStyle(
-              fontSize: 20, fontWeight: FontWeight.w500, color: Colors.black),
-        ),
-      ),
-      body: IndexedStack(
-        index: _selectedIndex,
-        children: pageList,
       ),
     );
   }
