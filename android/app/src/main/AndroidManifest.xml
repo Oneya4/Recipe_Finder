@@ -1,5 +1,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.example.recipe_finder">
+
+  <uses-permission android:name="android.permission.INTERNET"/>
    <application
         android:label="recipe_finder"
         android:icon="@mipmap/ic_launcher">
