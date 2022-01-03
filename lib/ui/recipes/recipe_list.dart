@@ -5,14 +5,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:chopper/chopper.dart';
+import 'package:provider/provider.dart';
 
 import '../widgets/custom_dropdown.dart';
 import '../colors.dart';
 import '../../network/recipe_model.dart';
 import '../recipe_card.dart';
 import 'recipe_details.dart';
-import '../../network/recipe_service.dart';
+// import '../../network/recipe_service.dart';
 import '../../network/model_response.dart';
+import '../../data/models/models.dart';
+import '../../mock_service/mock_service.dart';
 
 class RecipeList extends StatefulWidget {
   const RecipeList({Key? key}) : super(key: key);
@@ -194,7 +197,8 @@ class _RecipeListState extends State<RecipeList> {
       return Container();
     }
     return FutureBuilder<Response<Result<APIRecipeQuery>>>(
-      future: RecipeService.create().queryRecipes(
+      //or use future: RecipeService.create() from network/recipe_service.dart
+      future: Provider.of<MockService>(context).queryRecipes(
           searchTextController.text.trim(),
           currentStartPosition,
           currentEndPosition),
@@ -202,8 +206,11 @@ class _RecipeListState extends State<RecipeList> {
         if (snapshot.connectionState == ConnectionState.done) {
           if (snapshot.hasError) {
             return Center(
-              child: Text(snapshot.error.toString(),
-                  textAlign: TextAlign.center, textScaleFactor: 1.3),
+              child: Text(
+                snapshot.error.toString(),
+                textAlign: TextAlign.center,
+                textScaleFactor: 1.3,
+              ),
             );
           }
 
@@ -244,7 +251,6 @@ class _RecipeListState extends State<RecipeList> {
           return _buildRecipeList(context, currentSearchList);
         } else {
           if (currentCount == 0) {
-            // Show a loading indicator while waiting for the recipes
             return const Center(child: CircularProgressIndicator());
           } else {
             return _buildRecipeList(context, currentSearchList);
@@ -280,7 +286,16 @@ class _RecipeListState extends State<RecipeList> {
       onTap: () {
         Navigator.push(topLevelContext, MaterialPageRoute(
           builder: (context) {
-            return const RecipeDetails();
+            final detailRecipe = Recipe(
+                label: recipe.label,
+                image: recipe.image,
+                url: recipe.url,
+                calories: recipe.calories,
+                totalTime: recipe.totalTime,
+                totalWeight: recipe.totalWeight);
+
+            detailRecipe.ingredients = convertIngredients(recipe.ingredients);
+            return RecipeDetails(recipe: detailRecipe);
           },
         ));
       },
