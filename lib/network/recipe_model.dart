@@ -98,9 +98,9 @@ class APIIngredients {
 
 List<Ingredient> convertIngredients(List<APIIngredients> apiIngredients) {
   final ingredients = <Ingredient>[];
-  apiIngredients.forEach((ingredient) {
+  for (var ingredient in apiIngredients) {
     ingredients
         .add(Ingredient(name: ingredient.name, weight: ingredient.weight));
-  });
+  }
   return ingredients;
 }
